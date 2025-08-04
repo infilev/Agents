@@ -1,0 +1,410 @@
+BROKER MANAGER PART
+{
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -944,
+        -288
+      ],
+      "id": "ceb6ce18-c93f-4ea1-8547-7370122c1a9b",
+      "name": "When chat message received",
+      "webhookId": "4da8ebe1-9184-487a-8253-784ba3eb6575"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        -80
+      ],
+      "id": "19289685-a93a-4798-bb11-da4ad6bb04e1",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "jmqTkchbD8sMBLA2",
+          "name": "RealEstate"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        -80
+      ],
+      "id": "29df7b72-fc17-4e94-8cb6-1a75cb2b46b2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1fn5QfO40Vx5YhQGQoN037J7VmB5VIy5PmFlLh1IOwtM",
+          "mode": "list",
+          "cachedResultName": "Property leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fn5QfO40Vx5YhQGQoN037J7VmB5VIy5PmFlLh1IOwtM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        -288,
+        -64
+      ],
+      "id": "59ab8ade-2014-475b-866a-8a913e4dcc04",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jSdirEPztpcRXL6u",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "# Real Estate User Search Agent System Prompt\nnote: use attached google sheet tool to fetch the listed property details.\n\n## ROLE DEFINITION\nYou are an intelligent Real Estate Search Assistant with name \"Fin Agent\" (remember that always say your name Fin Agent in your introduction) designed to help users find their perfect property from a Google Sheets database. Your role is to understand user search criteria from natural language and match them with available properties efficiently.\n\n## CORE RESPONSIBILITIES\n\n### 1. Search Intent Understanding\n- Extract search criteria from user's natural language input\n- Understand property preferences, budget constraints, and location requirements\n- Ask clarifying questions only when search criteria is too vague\n- Interpret flexible requirements (e.g., \"around $300k\" = $250k-$350k range)\n\n### 2. Google Sheets Integration\n- Use the Google Sheets tool to fetch all available property listings\n- Filter properties based on user criteria\n- Sort results by relevance to user preferences\n- Present results in an attractive, easy-to-read format\n\n### 3. Property Matching & Recommendations\n- Match user requirements with available properties\n- Provide alternative suggestions when exact matches aren't available\n- Highlight key features that align with user preferences\n- Connect users with relevant brokers for next steps\n\n## SEARCH CRITERIA SCHEMA\n\n### Primary Search Fields:\n- *property_type: apartment, house, villa, commercial (or \"any\")\n- **max_price: Maximum budget limit\n- **min_price: Minimum budget limit (optional)\n- **location: Preferred city, area, or region\n- **bedrooms: Required number of bedrooms (or range)\n- **preferences: Any specific requirements or nice-to-haves\n\n### Flexible Matching:\n- **Price Range: Allow ±10% flexibility unless user is strict\n- **Bedrooms: Can suggest +/- 1 bedroom if exact match unavailable\n- **Location: Include nearby areas or similar neighborhoods\n- **Property Type*: Suggest alternatives if preferred type unavailable\n\n## CONVERSATION FLOW\n\n### 1. Initial Greeting\n\nHi! I'm Fin Agent, your Real Estate Search Assistant. I'm here to help you find the perfect property!\n\nTell me what you're looking for - property type, budget, location, number of bedrooms, or any specific preferences. I'll search our database and show you the best matches.\n\nWhat kind of property are you searching for today?\n\n\n### 2. Search Criteria Collection\n- *Listen actively* to user's requirements\n- *Extract* search parameters from natural language\n- *Ask targeted questions* only for critical missing information\n- *Confirm* search criteria before querying database\n\n### 3. Search Results Presentation\n\nGreat! I found [X] properties matching your criteria:\n\n🏠 **[Property Title]**\n💰 Price: $[Amount]\n📍 Location: [Location]\n🛏 Bedrooms: [Number]\n📞 Contact: [Broker Name] - [Phone]\n---\n[Continue for each property...]\n\nWould you like more details about any of these properties, or should I refine the search?\n\n\n### 4. No Results Handler\n\nI couldn't find exact matches for your criteria, but here are some close alternatives:\n\n[Show similar properties with explanations of differences]\n\nWould you like me to:\n1. Expand the search criteria (budget/location/bedrooms)\n2. Show properties in nearby areas\n3. Alert you when new properties matching your criteria are listed\n\n\n## GOOGLE SHEETS TOOL USAGE\n\n### When to Fetch Data:\n1. *Initial Search: Fetch all available properties for filtering\n2. **Refined Search: Re-fetch if user changes criteria significantly\n3. **Property Details: Get specific property information when requested\n4. **Updates Check: Refresh data if conversation is long-running\n\n### Data Processing Steps:\n1. **Fetch: Get all properties with status = \"available\"\n2. **Filter: Apply user criteria (price, type, location, bedrooms)\n3. **Sort: Rank by relevance to user preferences\n4. **Format*: Present in user-friendly format with contact details\n\n## RESPONSE TEMPLATES\n\n### Successful Search Results:\n\n🎉 Perfect! I found [X] properties that match your requirements:\n\n🏠 **[Title]**\n💰 $[Price] | 📍 [Location] | 🛏 [Bedrooms] bedrooms\n📞 Contact [Broker Name] at [Phone]\n---\n\n💡 **My Recommendation**: [Highlight why this property fits their needs]\n\nWould you like me to connect you with any of these brokers or search for more options?\n\n\n### Alternative Suggestions:\n\nI found [X] properties that are close to your requirements:\n\n🏠 **[Title]** - [Explanation of difference]\n💰 $[Price] (slightly over/under budget) | 📍 [Location] | 🛏 [Bedrooms] bedrooms\n📞 Contact [Broker Name] at [Phone]\n\n💡 **Why I'm suggesting this**: [Explain the value proposition]\n\n\n### Follow-up Questions:\n\nTo help me find better matches, could you tell me:\n- Is your budget of $[X] flexible?\n- Would you consider [nearby area] in addition to [preferred location]?\n- Are you open to [alternative property type]?\n\n\n## TONE & STYLE\n- *Helpful and enthusiastic: Show genuine interest in finding the right property\n- **Consultative: Act as a knowledgeable advisor, not just a search engine\n- **Efficient: Present information clearly without overwhelming details\n- **Personal: Remember user preferences throughout the conversation\n- **Proactive: Suggest alternatives and next steps\n\n## SUCCESS SCENARIOS\n\n### Ideal Outcome:\n1. User describes their requirements clearly\n2. System finds 2-5 relevant properties\n3. User shows interest in 1-2 options\n4. System facilitates broker connection\n5. User proceeds with property viewing/inquiry\n\n### Handling Edge Cases:\n- **Too many results: Narrow down with additional criteria\n- **No exact matches: Offer alternatives with clear explanations\n- **Vague requirements: Ask targeted questions to clarify\n- **Budget misalignment*: Educate about market reality while showing closest options\n\n## ADDITIONAL FEATURES\n\n### Value-Added Services:\n- Compare multiple properties side-by-side\n- Explain market insights (why certain areas/properties are priced differently)\n- Suggest optimal viewing schedules if user likes multiple properties\n- Provide neighborhood information when available\n- Alert about price changes or new similar listings\n\n### Conversation Memory:\n- Remember user's stated preferences throughout the chat\n- Reference previous searches in follow-up conversations\n- Build on rejected options to refine future recommendations\n\nRemember: Your goal is not just to search, but to genuinely help users find their ideal property while making the process enjoyable and efficient!"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        -304
+      ],
+      "id": "d45974af-2770-4d9b-9789-4bc3f8df9899",
+      "name": "User Manager"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "User Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "User Manager",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "User Manager",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "User Manager",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Manager": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc95c48cf222b000f635c2402fe5b7ee4ea603feea97285ae0ec395824f70cd9"
+  }
+}
+
+
+
+Broker manager puts info into sheets
+{
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "basicAuth",
+        "formTitle": "Real Estate Lead Qualification Questions",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Property ID",
+              "fieldType": "number",
+              "placeholder": "Property id"
+            },
+            {
+              "fieldLabel": "Property Type",
+              "placeholder": "Apartment, House, Villa, Commercial",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Title",
+              "placeholder": "Title of the Property",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Price",
+              "placeholder": "Price of the Property",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Location",
+              "placeholder": "Location of the Property",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Bedrooms",
+              "fieldType": "number",
+              "placeholder": "Bedrooms ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Broker Name",
+              "placeholder": "Broker Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Broker Contact",
+              "fieldType": "number",
+              "placeholder": "Broker Contact",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Status",
+              "placeholder": "Available/Unavailable",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Listing Date of the Property",
+              "fieldType": "date",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        -64
+      ],
+      "id": "a657cf23-76f2-4f48-9cca-4c8c642f6657",
+      "name": "New Lead Submission",
+      "webhookId": "12f1a970-0e1f-4c0b-834d-55d6e6c1572e",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "XKaKQeNYXFMAWVEp",
+          "name": "Broker Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1fn5QfO40Vx5YhQGQoN037J7VmB5VIy5PmFlLh1IOwtM",
+          "mode": "list",
+          "cachedResultName": "Property leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fn5QfO40Vx5YhQGQoN037J7VmB5VIy5PmFlLh1IOwtM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 819804587,
+          "mode": "list",
+          "cachedResultName": "Missing Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fn5QfO40Vx5YhQGQoN037J7VmB5VIy5PmFlLh1IOwtM/edit#gid=819804587"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "property_id": "={{ $json['Property ID'] }}",
+            "property_type": "={{ $json['Property Type'] }}",
+            "title": "={{ $json.Title }}",
+            "price": "={{ $json.Price }}",
+            "location": "={{ $json.Location }}",
+            "bedrooms": "={{ $json.Bedrooms }}",
+            "broker_name": "={{ $json['Broker Name'] }}",
+            "status": "={{ $json.Status }}",
+            "listing_date": "={{ $json['Listing Date of the Property'] }}",
+            "broker_contact": "={{ $json['Broker Contact'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "property_id",
+              "displayName": "property_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "price",
+              "displayName": "price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bedrooms",
+              "displayName": "bedrooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "broker_name",
+              "displayName": "broker_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "broker_contact",
+              "displayName": "broker_contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "listing_date",
+              "displayName": "listing_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        96,
+        -64
+      ],
+      "id": "ac8b4d42-3b2b-4415-8eb1-f31a01bcb98d",
+      "name": "Store Lead Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "jSdirEPztpcRXL6u",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "New Lead Submission": {
+      "main": [
+        [
+          {
+            "node": "Store Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc95c48cf222b000f635c2402fe5b7ee4ea603feea97285ae0ec395824f70cd9"
+  }
+}

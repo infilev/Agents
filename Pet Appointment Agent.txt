@@ -1,0 +1,593 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.Body }}\n\ntodays date is : {{ $now }}",
+        "options": {
+          "systemMessage": "=You are PetCare Assistant, a professional veterinary appointment booking agent. Your role is to collect comprehensive pet information through natural conversation and schedule appointments efficiently.\n\nCRITICAL: Only greet the user and ask for pet name first. Do NOT use any tools until question 13 when user provides specific appointment date/time.\n\nCONVERSATION FLOW:\nYou must collect ALL 15 data points in sequence. Ask ONE question at a time, wait for response, then proceed to next question based on conversation memory.\n\nREQUIRED INFORMATION:\n1. Pet name\n2. Pet type (dog, cat, bird, etc.)\n3. Pet breed (specific breed or mix)\n4. Pet age (years)\n5. Pet weight (kg)\n6. Pet gender (male/female)\n7. Aggressiveness level (0-5 scale, 0=very calm, 5=very aggressive)\n8. Spay/neuter status (yes/no/scheduled)\n9. Current medications (list all or \"none\")\n10. Recent surgeries (within 6 months or \"none\")\n11. Vaccination status (up to date/overdue/unknown)\n12. Flea/tick treatment (current treatment or \"none\")\n13. Preferred appointment date and time\n14. Customer email address\n15. Customer phone number\n\nCONVERSATION RULES:\n- Be warm, professional, and empathetic\n- Use natural language, avoid robotic responses\n- Reference previous answers to show you're listening\n- If user provides multiple answers in one response, acknowledge all and ask next question\n- For unclear responses, politely ask for clarification\n\nGENDER NEUTRALITY RULE:\n- NEVER assume pet gender based on name (Coco, Max, Bella, etc.)\n- Always use neutral pronouns (they/them) until gender is explicitly provided\n- Wait for user to specify gender - do not make assumptions\n- Examples: \"How old are they?\" not \"How old is she/he?\"\n- Only use gendered pronouns AFTER user confirms the pet's gender\n\n\nNATURAL LANGUAGE PROCESSING:\n- Extract information from conversational responses (e.g., \"My pet Choco doesn't take any medications\" → Pet name: Choco, Medications: none)\n- Parse multiple data points from single responses when provided naturally\n- Acknowledge extracted information and confirm accuracy before proceeding\n- If multiple pieces of information are provided, validate each one appropriately\n\nENHANCED RESPONSE HANDLING:\n- Accept \"I don't know\", \"Not sure\", \"Unknown\" gracefully - mark as \"Unknown\" and continue\n- Handle common misspellings in breed names (Golden Retreiver → Golden Retriever)\n- Accept variations in medication names (Heartgard → Heartguard)\n- If response is unclear, ask for clarification without repeating the entire question\n- Provide examples for complex questions: \"For aggressiveness, 0 means very calm, 5 means needs special handling\"\n\nBREED NAME HANDLING:\n- If user says \"labradoor\" do NOT assume \"Labradoodle\" \n- Partial names → Ask for full breed name\n- When uncertain about breed, say: \"I want to make sure I have the correct breed. Could you spell that or clarify?\"\n\nVALIDATION & ERROR HANDLING:\n- Date/time validation: Only accept future dates, reject past dates with polite correction request\n- Date format flexibility: Accept various formats (15th June 12:30 pm, 15/06/2025 12:30 pm, June 15 2025 at 12:30, June 12th at 11 AM, etc.)\n- Invalid email: Request proper format with example\n- Aggressiveness scale: Only accept 0-5 values, explain scale if user provides invalid range\n- Missing information: Gently prompt for complete answers\n- Wrong values: Politely ask user to provide correct information with specific guidance\n- For any invalid input, explain what's expected and ask for correction\n- Handle impossible dates: \"February 30th doesn't exist. Did you mean February 28th or March 2nd?\"\n\n\nCALENDAR AVAILABILITY TOOL:\n- You have access to a calendar checking tool\n- ONLY use this tool when user provides a specific appointment date and time\n- Do NOT use the calendar tool until you reach question 13 (Preferred appointment date and time)\n- Wait for the user to actually give you a date and time before checking calendar\n- When user provides appointment date/time (e.g., \"June 15th 2PM, 12th June at 11 AM\"), then use the calendar tool to check availability\n- If time slot is busy (events found), respond with: \"CALENDAR_CONFLICT\" followed by alternative suggestions\n- If time slot is free (no events), confirm availability and proceed to next question\n- Only check calendar when you have a specific date and time to verify\n- When checking calendar, always use IST timezone format with +05:30 offset\n- Example: \"June 21st 11 AM\" should check \"2025-06-21T11:00:00+05:30\" to \"2025-06-21T12:00:00+05:30\"\n- Do NOT convert to UTC - keep the IST timezone for calendar searches\n\n\n- Never check calendar with incomplete date/time information\n- If time is unclear, ask for clarification: \"Do you mean June 12th at 2:30 PM?\"\n- Always use complete ISO format: YYYY-MM-DDTHH:mm:00+05:30\n\nALTERNATIVE TIME RESPONSE HANDLING:\n- When user responds to conflict alternatives, they must provide complete date and time\n- If user gives only time (like \"2:30 PM\"), ask for clarification: \"Please specify the complete date and time, such as 'June 12th at 2:30 PM'\"\n- Only proceed with calendar checking when you have both date and time\n- Always re-check calendar availability for the new date/time combination\n\nIMPORTANT: When user gives only time (like \"2:30 PM\") after suggesting alternatives, combine it with the previously mentioned date for calendar checking.\n\nIMPORTANT: Do not use the calendar tool on initial greetings or general questions - only when checking specific appointment times.\n\nCONFLICT RESPONSE FORMAT:\n- When calendar shows conflict, always start response with: \"CALENDAR_CONFLICT\"\n- Example: \"CALENDAR_CONFLICT - That time slot is already booked. Please choose from these alternatives and include the full date and time:\n  • June 12 at 2:30 PM\n  • June 12 at 3:00 PM  \n  • June 13 at 11:00 AM \nPlease respond with your preferred option using the complete date and time (e.g., 'June 12 at 2:30 PM').\"\n\n\nEDGE CASES:\n- Medical concerns: Acknowledge but don't provide medical advice\n- Incomplete responses: Ask for specific missing details\n\nAPPOINTMENT SCHEDULING:\n- Confirm all details before booking\n- Validate appointment date is in the future\n- Check for scheduling conflicts\n- Provide appointment confirmation\n- Explain next steps\n\nCOMPLETION TRIGGER:\nWhen all 15 data points collected and confirmed, respond with only: \"BOOKING_READY\"\n\nMEMORY USAGE:\n- Reference conversation history to avoid repeating questions\n- Track which information already collected and validated\n- Maintain context throughout conversation\n- Remember customer preferences mentioned earlier\n- Cross-reference provided information for consistency\n\nStart by greeting the customer and asking for their pet's name."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -2624,
+        -224
+      ],
+      "id": "15047002-7301-4c77-8b01-8d7eb4972294",
+      "name": "Conversational AI Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "6f002baa-8342-41d0-9a3d-e1d7aca7ae2a",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "BOOKING_READY",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2096,
+        -224
+      ],
+      "id": "d2fef43c-4171-4e7a-866e-94ac380eabf2",
+      "name": "Check Booking Ready"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract booking details from this conversation and create appointment:{{ $('Conversational AI Agent').item.json.output }}\nCurrent date/time for reference: {{ $now }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a data extraction agent. Extract pet appointment information from the conversation summary provided.\n\nCurrent date/time for reference: {{ $now }}\n\nExtract ALL information from the complete conversation history. Use the conversation context to fill every field - don't leave any field empty if the information was discussed.\n\nREQUIRED OUTPUT FIELDS (use exact field names):\n- pet_name, pet_type, breed, age, weight, gender\n- agg_level (aggressiveness 0-5)\n- spayed_neutered (true/false)\n- medications, surgeries, vaccination, flea_treatment\n- appointment_datetime (IST timezone format)\n- customer_email, customer_phone\n\nIMPORTANT DATE PARSING:\n- Current date/time: {{ $now }}\n- Use year 2025 as default (NOT 2023 or any other year)\n- If user specifies year, use that exact year\n- Convert to IST timezone format: \"YYYY-MM-DDTHH:mm:00+05:30\"\n- Examples: \"June 20th at 1:30 PM\" → \"2025-06-20T13:30:00+05:30\"\n- VALIDATION: Ensure date is in the future compared to the current date\n- Always include +05:30 timezone offset for Indian Standard Time\n\nFORMATTING RULES:\n- For spay/neuter: \"No\"/\"Not spayed\" = false, \"Yes\"/\"Spayed\" = true\n- Extract the exact values mentioned in the conversation\n- Use conversation memory to get complete information\n- Age should be numeric (convert \"2 years\" to 2)\n- Weight should be numeric (convert \"5 kg\" to 5)\n\nFormat the output according to the required schema with exact field names."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -1504,
+        -496
+      ],
+      "id": "2993e2b2-e5df-4a13-9f41-77b3236dced8",
+      "name": "Booking Data Extractor"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-pet-booking",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2976,
+        -224
+      ],
+      "id": "05acc2a2-1043-4f36-a178-a74987cb56dc",
+      "name": "Twilio Webhook1",
+      "webhookId": "82feb937-7e8b-43aa-a847-851421f6d614"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1584,
+        -208
+      ],
+      "id": "9ddc371b-c3e6-4deb-9a9e-b4d22d873de9",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "5nSiWbwo2X8W9quG",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "+918265927091",
+        "toWhatsapp": true,
+        "message": "={{ $('Conversational AI Agent').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        -80
+      ],
+      "id": "071f2a78-b884-4271-8a19-1aa85d4f629c",
+      "name": "Twilio",
+      "credentials": {
+        "twilioApi": {
+          "id": "jYiw3AYrYtjJhsHD",
+          "name": "Ayush Twilio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -2768,
+        0
+      ],
+      "id": "b65eea6d-063d-4b30-b32f-f1ed1c8ce138",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "5nSiWbwo2X8W9quG",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "anubhav7408@gmail.com",
+          "mode": "list",
+          "cachedResultName": "anubhav7408@gmail.com"
+        },
+        "start": "={{ $json.output.appointment_datetime }}",
+        "end": "={{ DateTime.fromISO($json.output.appointment_datetime).plus({hours: 1}).toISO() }}",
+        "useDefaultReminders": false,
+        "additionalFields": {
+          "description": "=Pet Appointment Reminder\n\nPet: {{ $json.output.pet_name }}\nType: {{ $json.output.pet_type }}\nBreed: {{ $json.output.breed }}\nCustomer: {{ $json.output.customer_email }}\nPhone: {{ $json.output.customer_phone }}",
+          "summary": "=Pet Appointment {{ $json.output.pet_name }} "
+        },
+        "remindersUi": {
+          "remindersValues": [
+            {
+              "method": "popup",
+              "minutes": 1440
+            },
+            {
+              "method": "popup",
+              "minutes": 10080
+            },
+            {
+              "method": "popup",
+              "minutes": 21600
+            },
+            {
+              "method": "popup",
+              "minutes": 40320
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -400
+      ],
+      "id": "899ada81-2bf9-4b84-8f6b-f0117015eab0",
+      "name": "Create Calendar Reminder",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "fMWRYZxrANYrAvig",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "+918265927091",
+        "toWhatsapp": true,
+        "message": "=Your appointment has been booked for {{ $('Booking Data Extractor').item.json.output.pet_name }} on {{ DateTime.fromISO($('Booking Data Extractor').item.json.output.appointment_datetime).toFormat('MMMM dd, yyyy') }} at {{ DateTime.fromISO($('Booking Data Extractor').item.json.output.appointment_datetime).toFormat('h:mm a') }}.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -624
+      ],
+      "id": "e2e9d8a8-5adf-4564-883a-2bc0d44abddc",
+      "name": "Twilio send message",
+      "credentials": {
+        "twilioApi": {
+          "id": "jYiw3AYrYtjJhsHD",
+          "name": "Ayush Twilio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1tgtfn4PRP7UOFBmLsfBS8Z3C29VjGW8C4EK8IPHU6O8",
+          "mode": "list",
+          "cachedResultName": "Pet Appointments sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tgtfn4PRP7UOFBmLsfBS8Z3C29VjGW8C4EK8IPHU6O8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Pet Appointments",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tgtfn4PRP7UOFBmLsfBS8Z3C29VjGW8C4EK8IPHU6O8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "output"
+          ],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -640,
+        -176
+      ],
+      "id": "0081a9d4-3331-466b-9b30-6c2ba7402275",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3qdHJ4EvU5wEiD9V",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n    \"pet_type\": { \"type\": \"string\" },\n    \"pet_name\": { \"type\": \"string\" },\n    \"breed\": { \"type\": \"string\" },\n    \"age\": { \"type\": \"number\" },\n    \"weight\": { \"type\": \"number\" },\n    \"gender\": { \"type\": \"string\" },\n    \"agg_level\": { \"type\": \"number\" },\n    \"spayed_neutered\": { \"type\": \"boolean\" },\n    \"medications\": { \"type\": \"string\" },\n    \"surgeries\": { \"type\": \"string\" },\n    \"vaccination\": { \"type\": \"string\" },\n    \"flea_treatment\": { \"type\": \"string\" },\n    \"appointment_datetime\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    },\n    \"customer_email\": { \"type\": \"string\" },\n    \"customer_phone\": { \"type\": \"string\" }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -1264,
+        -208
+      ],
+      "id": "2d9dc422-32d4-4942-ad6d-a2b10187f33c",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4a8cd95-0098-4de5-b9f9-aae65e1472e5",
+              "name": "Pet Name",
+              "value": "={{ $json.output.pet_name }}",
+              "type": "string"
+            },
+            {
+              "id": "294384f9-5bc0-4a15-923a-e2d6aac9512e",
+              "name": "Pet Type",
+              "value": "={{ $json.output.pet_type }}",
+              "type": "string"
+            },
+            {
+              "id": "5aad6c90-f541-4727-85ab-99df838f202b",
+              "name": "Breed",
+              "value": "={{ $json.output.breed }}",
+              "type": "string"
+            },
+            {
+              "id": "97558b62-5bc7-4e40-85de-e6b6f393c46a",
+              "name": "Age",
+              "value": "={{ $json.output.age }}",
+              "type": "number"
+            },
+            {
+              "id": "d62b5f29-a0c7-409d-bc27-9fc9f3a1a552",
+              "name": "Weight",
+              "value": "={{ $json.output.weight }}",
+              "type": "number"
+            },
+            {
+              "id": "9d90ce46-8ff1-4b8d-8c53-53e189f53e45",
+              "name": "Gender",
+              "value": "={{ $json.output.gender }}",
+              "type": "string"
+            },
+            {
+              "id": "c7a5c201-551b-42e0-904f-3d5acfa9f28f",
+              "name": "Agressesion Level",
+              "value": "={{ $json.output.agg_level }}",
+              "type": "number"
+            },
+            {
+              "id": "7ed9faca-45dd-46b1-8141-5721343e6260",
+              "name": "Spayed/Neutered",
+              "value": "={{ $json.output.spayed_neutered }}",
+              "type": "boolean"
+            },
+            {
+              "id": "f0654a3b-4cb2-4466-8ae9-a6d4cc4cd44f",
+              "name": "Medications",
+              "value": "={{ $json.output.medications }}",
+              "type": "string"
+            },
+            {
+              "id": "b5c95fa0-985b-4ce9-94ec-317d60dd136a",
+              "name": "Surgeries",
+              "value": "={{ $json.output.surgeries }}",
+              "type": "string"
+            },
+            {
+              "id": "2f197608-6a3f-4401-a5bf-5a80e251064b",
+              "name": "Vaccination",
+              "value": "={{ $json.output.vaccination }}",
+              "type": "string"
+            },
+            {
+              "id": "dc2e62ae-b279-4373-8f46-05554f7d5947",
+              "name": "Flea Treatment",
+              "value": "={{ $json.output.flea_treatment }}",
+              "type": "string"
+            },
+            {
+              "id": "f2f52592-7e46-4659-adf2-2aa49db6861d",
+              "name": "Appointment DateTime",
+              "value": "={{ $json.output.appointment_datetime }}",
+              "type": "string"
+            },
+            {
+              "id": "26421e89-0bb2-432b-8ca5-6dc713d285fb",
+              "name": "Customer Email",
+              "value": "={{ $json.output.customer_email }}",
+              "type": "string"
+            },
+            {
+              "id": "01ece31c-fada-4674-8030-8b80f6b45d67",
+              "name": "Customer Phone",
+              "value": "={{ $json.output.customer_phone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -960,
+        -176
+      ],
+      "id": "2336cd75-04f9-4b65-bf25-4272c71d1de0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "anubhav7408@gmail.com",
+          "mode": "list",
+          "cachedResultName": "anubhav7408@gmail.com"
+        },
+        "limit": 10,
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', `Start time for calendar availability check. Always use IST timezone with +05:30 offset. When user says \"June 21st 11 AM\", use exactly \"2025-06-21T11:00:00+05:30\" - do not convert to UTC.`, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', `End time for calendar availability check. Add 1 hour to start time in IST timezone with +05:30 offset. When user says \"June 21st 11 AM\", use exactly \"2025-06-21T12:00:00+05:30\" - do not convert to UTC.`, 'string') }}",
+        "options": {
+          "timeZone": {
+            "__rl": true,
+            "value": "Asia/Kolkata",
+            "mode": "list",
+            "cachedResultName": "Asia/Kolkata"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -2576,
+        0
+      ],
+      "id": "18e3dea2-8ee0-48f0-b0b2-b69bd3d9b508",
+      "name": "Calendar checking tool",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "fMWRYZxrANYrAvig",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Twilio Webhook1').item.json.body.WaId }}_{{ $now.toFormat('yyyy-MM-dd') }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -2208,
+        112
+      ],
+      "id": "c94a26b5-3969-4d2d-b4e3-e79e293367a0",
+      "name": "Simple Memory"
+    }
+  ],
+  "connections": {
+    "Conversational AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Booking Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Booking Ready": {
+      "main": [
+        [
+          {
+            "node": "Booking Data Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Data Extractor": {
+      "main": [
+        [
+          {
+            "node": "Create Calendar Reminder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Twilio send message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Conversational AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Booking Data Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio": {
+      "main": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Conversational AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Calendar Reminder": {
+      "main": [
+        []
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Booking Data Extractor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar checking tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Conversational AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Conversational AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Booking Data Extractor",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6e776a8f1c55ea1886b294c989fa1bd1c9dbc6e20593ed562a87cac4af56455"
+  }
+}
